@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   AirVent,
@@ -22,7 +22,6 @@ import {
   CartesianGrid,
   Line,
   LineChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -189,6 +188,19 @@ function DashboardTab() {
     { id: "light", name: "Đèn", icon: Lightbulb, on: false, auto: true },
   ]);
 
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [chartWidth, setChartWidth] = useState(0);
+
+  useEffect(() => {
+    const el = chartRef.current;
+    if (!el) return;
+    const measure = () => setChartWidth(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const update = (id: string, patch: Partial<Device>) =>
     setDevices((d) => d.map((x) => (x.id === id ? { ...x, ...patch } : x)));
 
@@ -326,9 +338,9 @@ function DashboardTab() {
           </div>
         </div>
 
-        <div className="mt-6 h-[320px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+        <div ref={chartRef} className="mt-6 h-[320px] w-full">
+          {chartWidth > 0 && (
+            <LineChart width={chartWidth} height={320} data={chartData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
               <CartesianGrid stroke="var(--border)" strokeDasharray="4 6" vertical={false} />
               <XAxis
                 dataKey="time"
@@ -382,7 +394,7 @@ function DashboardTab() {
                 dot={false}
               />
             </LineChart>
-          </ResponsiveContainer>
+          )}
         </div>
       </Panel>
     </div>
